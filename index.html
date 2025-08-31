@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lynq Secure Checkout</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .checkout-container {
+            background: white;
+            border-radius: 12px;
+            padding: 32px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            max-width: 440px;
+            width: 100%;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .checkout-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .logo {
+            font-size: 28px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 8px;
+        }
+
+        .amount-display {
+            font-size: 32px;
+            font-weight: 600;
+            color: #1a1a1a;
+            margin-bottom: 8px;
+        }
+
+        .merchant-info {
+            font-size: 14px;
+            color: #666;
+        }
+
+        .form-section {
+            margin-bottom: 24px;
+        }
+
+        .form-section h3 {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1a1a1a;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+        }
+
+        .form-section h3::before {
+            content: '';
+            width: 20px;
+            height: 20px;
+            margin-right: 8px;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="%23667eea"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg>') no-repeat center;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 16px;
+        }
+
+        .form-row .form-group {
+            flex: 1;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            color: #374151;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 16px;
+            font-family: inherit;
+            transition: all 0.2s ease;
+            background: #fafafa;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        input.error {
+            border-color: #ef4444;
+            background: #fef2f2;
+        }
+
+        input.valid {
+            border-color: #10b981;
+            background: #f0fdf4;
+        }
+
+        .error-message {
+            color: #ef4444;
+            font-size: 12px;
+            margin-top: 4px;
+            display: none;
+        }
+
+        .card-icons {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .card-icon {
+            width: 32px;
+            height: 20px;
+            border-radius: 4px;
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            opacity: 0.3;
+            transition: opacity 0.2s;
+        }
+
+        .card-icon.active {
+            opacity: 1;
+        }
+
+        .card-icon.visa { background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%231a1f71"><path d="M3 4h18a2 2 0 012 2v12a2 2 0 01-2 2H3a2 2 0 01-2-2V6a2 2 0 012-2z"/><text x="12" y="16" text-anchor="middle" fill="white" font-size="8" font-weight="bold">VISA</text></svg>'); }
+        .card-icon.mastercard { background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><circle cx="9" cy="12" r="6" fill="%23eb001b"/><circle cx="15" cy="12" r="6" fill="%23f79e1b" opacity="0.8"/></svg>'); }
+        .card-icon.amex { background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23006fcf"><path d="M3 4h18a2 2 0 012 2v12a2 2 0 01-2 2H3a2 2 0 01-2-2V6a2 2 0 012-2z"/><text x="12" y="16" text-anchor="middle" fill="white" font-size="6" font-weight="bold">AMEX</text></svg>'); }
+
+        .submit-button {
+            width: 100%;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 16px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .submit-button:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .submit-button:active {
+            transform: translateY(0);
+        }
+
+        .submit-button:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .submit-button .spinner {
+            display: none;
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 8px;
+        }
+
+        .submit-button.loading .spinner {
+            display: inline-block;
+        }
+
+        .submit-button.loading .button-text {
+            opacity: 0.7;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .security-info {
+            text-align: center;
+            margin-top: 24px;
+            padding-top: 24px;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .security-badge {
+            display: inline-flex;
+            align-items: center;
+            font-size: 12px;
+            color: #6b7280;
+            margin-bottom: 8px;
+        }
+
+        .security-badge::before {
+            content: '🔒';
+            margin-right: 6px;
+        }
+
+        .powered-by {
+            font-size: 11px;
+            color: #9ca3af;
+        }
+
+        .success-state {
+            display: none;
+            text-align: center;
+            padding: 32px 0;
+        }
+
+        .success-icon {
+            width: 64px;
+            height: 64px;
+            background: #10b981;
+            border-radius: 50%;
+            margin: 0 auto 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+
+        .error-state {
+            display: none;
+            text-align: center;
+            padding: 32px 0;
+        }
+
+        .error-icon {
+            width: 64px;
+            height: 64px;
+            background: #ef4444;
+            border-radius: 50%;
+            margin: 0 auto 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 10px;
+            }
+
+            .checkout-container {
+                padding: 24px;
+            }
+
+            .form-row {
+                flex-direction: column;
+                gap: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="checkout-container">
+    <div class="header">
+        <div class="logo">lynq</div>
+        <div class="amount-display" id="amount-display">$29.99 USD</div>
+        <div class="merchant-info" id="merchant-info">Payment to Example Store</div>
+    </div>
+
+    <form id="payment-form" class="payment-form">
+        <div class="form-section">
+            <h3>Payment Information</h3>
+
+            <div class="form-group">
+                <label for="card-number">Card Number</label>
+                <input
+                        type="text"
+                        id="card-number"
+                        placeholder="1234 5678 9012 3456"
+                        maxlength="19"
+                        autocomplete="cc-number"
+                >
+                <div class="card-icons">
+                    <div class="card-icon visa"></div>
+                    <div class="card-icon mastercard"></div>
+                    <div class="card-icon amex"></div>
+                </div>
+                <div class="error-message" id="card-number-error"></div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="card-expiry">Expiry Date</label>
+                    <input
+                            type="text"
+                            id="card-expiry"
+                            placeholder="MM/YY"
+                            maxlength="5"
+                            autocomplete="cc-exp"
+                    >
+                    <div class="error-message" id="card-expiry-error"></div>
+                </div>
+                <div class="form-group">
+                    <label for="card-cvc">CVC</label>
+                    <input
+                            type="text"
+                            id="card-cvc"
+                            placeholder="123"
+                            maxlength="4"
+                            autocomplete="cc-csc"
+                    >
+                    <div class="error-message" id="card-cvc-error"></div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="card-name">Cardholder Name</label>
+                <input
+                        type="text"
+                        id="card-name"
+                        placeholder="John Doe"
+                        autocomplete="cc-name"
+                >
+                <div class="error-message" id="card-name-error"></div>
+            </div>
+        </div>
+
+        <button type="submit" id="submit-button" class="submit-button" disabled>
+            <span class="spinner"></span>
+            <span class="button-text">Complete Payment</span>
+        </button>
+    </form>
+
+    <div class="success-state" id="success-state">
+        <div class="success-icon">✓</div>
+        <h3>Payment Successful!</h3>
+        <p>Your payment has been processed successfully.</p>
+    </div>
+
+    <div class="error-state" id="error-state">
+        <div class="error-icon">✕</div>
+        <h3>Payment Failed</h3>
+        <p id="error-message">Please try again or use a different payment method.</p>
+        <button onclick="resetForm()" style="margin-top: 16px; background: none; border: 1px solid #667eea; color: #667eea; padding: 8px 16px; border-radius: 4px; cursor: pointer;">Try Again</button>
+    </div>
+
+    <div class="security-info">
+        <div class="security-badge">Your payment information is secure and encrypted</div>
+        <div class="powered-by">Powered by Lynq</div>
+    </div>
+</div>
+
+<script>
+    class LynqCheckout {
+        constructor() {
+            this.config = this.parseUrlParams();
+            this.formData = {};
+            this.init();
+        }
+
+        parseUrlParams() {
+            const params = new URLSearchParams(window.location.search);
+            return {
+                amount: parseInt(params.get('amount')) || 2999,
+                currency: params.get('currency') || 'USD',
+                apiKey: params.get('apiKey'),
+                customerEmail: params.get('customerEmail'),
+                environment: params.get('environment') || 'sandbox',
+                metadata: params.get('metadata') ? JSON.parse(params.get('metadata')) : {}
+            };
+        }
+
+        init() {
+            this.setupUI();
+            this.setupEventListeners();
+            this.setupPostMessageListeners();
+            this.notifyReady();
+        }
+
+        setupUI() {
+            // Update amount display
+            const amountDisplay = document.getElementById('amount-display');
+            const amount = (this.config.amount / 100).toFixed(2);
+            amountDisplay.textContent = `$${amount} ${this.config.currency}`;
+
+            // Update merchant info if available
+            if (this.config.customerEmail) {
+                document.getElementById('merchant-info').textContent =
+                    `Payment for ${this.config.customerEmail}`;
+            }
+        }
+
+        setupEventListeners() {
+            // Card number formatting and validation
+            const cardNumberInput = document.getElementById('card-number');
+            cardNumberInput.addEventListener('input', (e) => {
+                e.target.value = this.formatCardNumber(e.target.value);
+                this.validateCardNumber(e.target.value);
+                this.detectCardType(e.target.value);
+            });
+
+            // Expiry formatting and validation
+            const cardExpiryInput = document.getElementById('card-expiry');
+            cardExpiryInput.addEventListener('input', (e) => {
+                e.target.value = this.formatExpiry(e.target.value);
+                this.validateExpiry(e.target.value);
+            });
+
+            // CVC validation
+            const cardCvcInput = document.getElementById('card-cvc');
+            cardCvcInput.addEventListener('input', (e) => {
+                e.target.value = e.target.value.replace(/\D/g, '');
+                this.validateCvc(e.target.value);
+            });
+
+            // Name validation
+            const cardNameInput = document.getElementById('card-name');
+            cardNameInput.addEventListener('input', (e) => {
+                this.validateName(e.target.value);
+            });
+
+            // Form submission
+            document.getElementById('payment-form').addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.handleSubmit();
+            });
+
+            // Real-time validation check
+            document.querySelectorAll('input').forEach(input => {
+                input.addEventListener('input', () => {
+                    this.checkFormValidity();
+                });
+            });
+        }
+
+        setupPostMessageListeners() {
+            window.addEventListener('message', (event) => {
+                if (event.data.type === 'LYNQ_SUBMIT') {
+                    this.handleSubmit();
+                }
+            });
+        }
+
+        formatCardNumber(value) {
+            const cleaned = value.replace(/\s/g, '');
+            const match = cleaned.match(/(\d{1,4})(\d{1,4})?(\d{1,4})?(\d{1,4})?/);
+            if (match) {
+                return [match[1], match[2], match[3], match[4]]
+                    .filter(Boolean)
+                    .join(' ');
+            }
+            return cleaned;
+        }
+
+        formatExpiry(value) {
+            const cleaned = value.replace(/\D/g, '');
+            if (cleaned.length >= 2) {
+                return cleaned.substring(0, 2) + '/' + cleaned.substring(2, 4);
+            }
+            return cleaned;
+        }
+
+        validateCardNumber(value) {
+            const cleaned = value.replace(/\s/g, '');
+            const input = document.getElementById('card-number');
+            const errorEl = document.getElementById('card-number-error');
+
+            if (cleaned.length < 13 || cleaned.length > 19) {
+                this.showFieldError(input, errorEl, 'Invalid card number');
+                return false;
+            } else if (!this.luhnCheck(cleaned)) {
+                this.showFieldError(input, errorEl, 'Invalid card number');
+                return false;
+            } else {
+                this.showFieldValid(input, errorEl);
+                return true;
+            }
+        }
+
+        validateExpiry(value) {
+            const input = document.getElementById('card-expiry');
+            const errorEl = document.getElementById('card-expiry-error');
+            const match = value.match(/^(\d{2})\/(\d{2})$/);
+
+            if (!match) {
+                this.showFieldError(input, errorEl, 'Invalid expiry date');
+                return false;
+            }
+
+            const month = parseInt(match[1]);
+            const year = parseInt('20' + match[2]);
+            const now = new Date();
+            const currentYear = now.getFullYear();
+            const currentMonth = now.getMonth() + 1;
+
+            if (month < 1 || month > 12) {
+                this.showFieldError(input, errorEl, 'Invalid month');
+                return false;
+            }
+
+            if (year < currentYear || (year === currentYear && month < currentMonth)) {
+                this.showFieldError(input, errorEl, 'Card has expired');
+                return false;
+            }
+
+            this.showFieldValid(input, errorEl);
+            return true;
+        }
+
+        validateCvc(value) {
+            const input = document.getElementById('card-cvc');
+            const errorEl = document.getElementById('card-cvc-error');
+
+            if (value.length < 3 || value.length > 4) {
+                this.showFieldError(input, errorEl, 'Invalid CVC');
+                return false;
+            } else {
+                this.showFieldValid(input, errorEl);
+                return true;
+            }
+        }
+
+        validateName(value) {
+            const input = document.getElementById('card-name');
+            const errorEl = document.getElementById('card-name-error');
+
+            if (value.trim().length < 2) {
+                this.showFieldError(input, errorEl, 'Please enter cardholder name');
+                return false;
+            } else {
+                this.showFieldValid(input, errorEl);
+                return true;
+            }
+        }
+
+        showFieldError(input, errorEl, message) {
+            input.classList.add('error');
+            input.classList.remove('valid');
+            errorEl.textContent = message;
+            errorEl.style.display = 'block';
+        }
+
+        showFieldValid(input, errorEl) {
+            input.classList.add('valid');
+            input.classList.remove('error');
+            errorEl.style.display = 'none';
+        }
+
+        detectCardType(value) {
+            const cleaned = value.replace(/\s/g, '');
+            const icons = document.querySelectorAll('.card-icon');
+            icons.forEach(icon => icon.classList.remove('active'));
+
+            if (/^4/.test(cleaned)) {
+                document.querySelector('.card-icon.visa').classList.add('active');
+            } else if (/^5[1-5]/.test(cleaned) || /^2[2-7]/.test(cleaned)) {
+                document.querySelector('.card-icon.mastercard').classList.add('active');
+            } else if (/^3[47]/.test(cleaned)) {
+                document.querySelector('.card-icon.amex').classList.add('active');
+            }
+        }
+
+        luhnCheck(value) {
+            let sum = 0;
+            let alternate = false;
+            for (let i = value.length - 1; i >= 0; i--) {
+                let n = parseInt(value.charAt(i));
+                if (alternate) {
+                    n *= 2;
+                    if (n > 9) n = (n % 10) + 1;
+                }
+                sum += n;
+                alternate = !alternate;
+            }
+            return sum % 10 === 0;
+        }
+
+        checkFormValidity() {
+            const cardNumber = document.getElementById('card-number').value;
+            const cardExpiry = document.getElementById('card-expiry').value;
+            const cardCvc = document.getElementById('card-cvc').value;
+            const cardName = document.getElementById('card-name').value;
+
+            const isValid =
+                this.validateCardNumber(cardNumber) &&
+                this.validateExpiry(cardExpiry) &&
+                this.validateCvc(cardCvc) &&
+                this.validateName(cardName);
+
+            document.getElementById('submit-button').disabled = !isValid;
+        }
+
+        async handleSubmit() {
+            const submitButton = document.getElementById('submit-button');
+            submitButton.classList.add('loading');
+            submitButton.disabled = true;
+
+            // Collect form data
+            this.formData = {
+                cardNumber: document.getElementById('card-number').value.replace(/\s/g, ''),
+                cardExpiry: document.getElementById('card-expiry').value,
+                cardCvc: document.getElementById('card-cvc').value,
+                cardName: document.getElementById('card-name').value,
+                amount: this.config.amount,
+                currency: this.config.currency,
+                customerEmail: this.config.customerEmail,
+                metadata: this.config.metadata
+            };
+
+            try {
+                // Simulate payment processing (replace with actual API call)
+                await this.processPayment();
+                this.showSuccess();
+            } catch (error) {
+                this.showError(error.message);
+            } finally {
+                submitButton.classList.remove('loading');
+            }
+        }
+
+        async processPayment() {
+            // Simulate API call delay
+            await new Promise(resolve => setTimeout(resolve, 2000));
+
+            // Simulate 85% success rate for demo
+            if (Math.random() > 0.15) {
+                const result = {
+                    transactionId: 'txn_' + Math.random().toString(36).substr(2, 9),
+                    status: 'success',
+                    amount: this.config.amount,
+                    currency: this.config.currency,
+                    paymentMethod: {
+                        type: 'card',
+                        last4: this.formData.cardNumber.slice(-4),
+                        brand: this.detectCardBrand(this.formData.cardNumber)
+                    },
+                    metadata: this.config.metadata
+                };
+
+                this.notifyPaymentSuccess(result);
+                return result;
+            } else {
+                throw new Error('Your card was declined. Please try a different card.');
+            }
+        }
+
+        detectCardBrand(cardNumber) {
+            if (/^4/.test(cardNumber)) return 'visa';
+            if (/^5[1-5]/.test(cardNumber) || /^2[2-7]/.test(cardNumber)) return 'mastercard';
+            if (/^3[47]/.test(cardNumber)) return 'amex';
+            return 'unknown';
+        }
+
+        showSuccess() {
+            document.getElementById('payment-form').style.display = 'none';
+            document.getElementById('success-state').style.display = 'block';
+            this.autoResize();
+        }
+
+        showError(message) {
+            document.getElementById('error-message').textContent = message;
+            document.getElementById('payment-form').style.display = 'none';
+            document.getElementById('error-state').style.display = 'block';
+            this.notifyPaymentError({ code: 'PAYMENT_FAILED', message });
+            this.autoResize();
+        }
+
+        notifyReady() {
+            window.parent.postMessage({
+                type: 'LYNQ_READY'
+            }, '*');
+            this.autoResize();
+        }
+
+        notifyPaymentSuccess(result) {
+            window.parent.postMessage({
+                type: 'LYNQ_PAYMENT_SUCCESS',
+                payload: result
+            }, '*');
+        }
+
+        notifyPaymentError(error) {
+            window.parent.postMessage({
+                type: 'LYNQ_PAYMENT_ERROR',
+                payload: error
+            }, '*');
+        }
+
+        autoResize() {
+            setTimeout(() => {
+                const height = document.body.scrollHeight;
+                window.parent.postMessage({
+                    type: 'LYNQ_RESIZE',
+                    payload: { height: height + 20 }
+                }, '*');
+            }, 100);
+        }
+    }
+
+    // Global functions
+    function resetForm() {
+        document.getElementById('payment-form').style.display = 'block';
+        document.getElementById('error-state').style.display = 'none';
+        document.getElementById('success-state').style.display = 'none';
+
+        // Reset form
+        document.getElementById('payment-form').reset();
+        document.querySelectorAll('.error').forEach(el => {
+            el.classList.remove('error', 'valid');
+        });
+        document.querySelectorAll('.error-message').forEach(el => {
+            el.style.display = 'none';
+        });
+        document.getElementById('submit-button').disabled = true;
+
+        checkout.autoResize();
+    }
+
+    // Initialize checkout
+    let checkout;
+    document.addEventListener('DOMContentLoaded', () => {
+        checkout = new LynqCheckout();
+    });
+</script>
+</body>
+</html>
